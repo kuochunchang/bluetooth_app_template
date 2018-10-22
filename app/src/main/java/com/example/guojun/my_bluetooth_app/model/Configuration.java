@@ -1,7 +1,7 @@
 package com.example.guojun.my_bluetooth_app.model;
 
 public interface Configuration {
-    String BLUETOOTH_DEVICE_NAME_PARAM_NAME = "bluetooth_device_name";
+    String BLUETOOTH_DEVICE_ADDRESS = "bluetooth_device_address";
 
     public String getName();
 

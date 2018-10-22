@@ -11,12 +11,12 @@ import java.util.List;
 @Dao
 public interface ConfigurationDao {
     @Query("select * from configurations")
-    LiveData<List<ConfigurationEntity>> getAll();
+    List<ConfigurationEntity> getAll();
 
     @Query("select * from configurations where name = :name")
-    LiveData<ConfigurationEntity> getConfiguration(String name);
+    ConfigurationEntity getConfiguration(String name);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void update(ConfigurationEntity entity);
+    Long update(ConfigurationEntity entity);
 
 }

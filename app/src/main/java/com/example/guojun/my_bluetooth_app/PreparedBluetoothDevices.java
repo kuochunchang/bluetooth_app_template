@@ -10,18 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class PrepairedBluetoothDevices {
+public class PreparedBluetoothDevices {
 
     private List<BluetoothDevice> bluetoothDevices = new ArrayList<>();
 
-
-//    public class BluetoothDeviceInfo{
-//        String name;
-//        BluetoothDevice device;
-//
-//    }
-
-    public PrepairedBluetoothDevices() throws DeviceNotSupportException {
+    public PreparedBluetoothDevices() throws DeviceNotSupportException {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             throw new DeviceNotSupportException("The device not support bluetooth");
@@ -48,5 +41,19 @@ public class PrepairedBluetoothDevices {
         }
         return result.toArray(new String[result.size()]);
     }
+
+    public BluetoothDevice findByAddress(String address){
+        for(BluetoothDevice d: bluetoothDevices){
+            if(d.getAddress().equals(address)){
+                return d;
+            }
+        }
+        return null;
+    }
+
+    public List<BluetoothDevice> getAll(){
+        return bluetoothDevices;
+    }
+
 
 }

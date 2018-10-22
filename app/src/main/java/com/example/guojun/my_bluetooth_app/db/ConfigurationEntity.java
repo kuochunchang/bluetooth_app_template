@@ -8,6 +8,12 @@ import com.example.guojun.my_bluetooth_app.model.Configuration;
 
 @Entity(tableName = "configurations")
 public class ConfigurationEntity implements Configuration {
+
+    public ConfigurationEntity(@NonNull String name, String value) {
+        this.name = name;
+        this.value = value;
+    }
+
     @PrimaryKey
     @NonNull
     private String name;
