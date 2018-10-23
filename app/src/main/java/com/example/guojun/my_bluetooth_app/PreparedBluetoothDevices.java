@@ -44,6 +44,7 @@ public class PreparedBluetoothDevices {
 
     public BluetoothDevice findByAddress(String address){
         for(BluetoothDevice d: bluetoothDevices){
+            Log.d("---->", address + "-" + d.getAddress());
             if(d.getAddress().equals(address)){
                 return d;
             }
