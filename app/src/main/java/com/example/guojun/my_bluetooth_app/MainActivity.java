@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
     private PreparedBluetoothDevices mPreparedBluetoothDevices;
     private BluetoothDevice mCurrentBluetoothDevice;
     private DeviceDataFragment mFragment;
+    private AppDatabase mAppDatabase;
 
     private static final String TAG = "MainActivity";
 
@@ -43,9 +44,9 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
         }
 
 
-        AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "app-db").allowMainThreadQueries().build();
+        mAppDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "app-db").allowMainThreadQueries().build();
         ConfigurationEntity bluetoothDevice =
-                appDatabase.configurationDao().getConfiguration(Configuration.BLUETOOTH_DEVICE_ADDRESS);
+                mAppDatabase.configurationDao().getConfiguration(Configuration.BLUETOOTH_DEVICE_ADDRESS);
 
         TextView deviceName = findViewById(R.id.bluetooth_device_name);
 
@@ -65,16 +66,8 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
             fab.hide();
 
             String deviceAddress = bluetoothDevice.getValue();
-
             mCurrentBluetoothDevice = mPreparedBluetoothDevices.findByAddress(deviceAddress);
             deviceName.setText(String.format("%s (%s)", mCurrentBluetoothDevice.getName(), mCurrentBluetoothDevice.getAddress()));
-
-            // Load device data fragment
-            FragmentManager fragmentManager = getFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            mFragment = DeviceDataFragment.newInstance(mCurrentBluetoothDevice.getAddress());
-            fragmentTransaction.add(R.id.device_data_fragment_container, mFragment);
-            fragmentTransaction.commit();
 
         }
     }
@@ -82,6 +75,18 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
     @Override
     protected void onResume() {
         super.onResume();
+
+//        ConfigurationEntity bluetoothDevice =
+//                mAppDatabase.configurationDao().getConfiguration(Configuration.BLUETOOTH_DEVICE_ADDRESS);
+//
+
+
+        // Load device data fragment
+        FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        mFragment = DeviceDataFragment.newInstance(mCurrentBluetoothDevice.getAddress());
+        fragmentTransaction.add(R.id.device_data_fragment_container, mFragment);
+        fragmentTransaction.commit();
 
     }
 
@@ -105,8 +110,10 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
     }
 
     @Override
-    public void onFragmentInteraction(String data) {
-
+    public void onDeviceConnected() {
+        TextView textView = findViewById(R.id.bluetooth_device_status);
+        textView.setText("Connected");
+        textView.setTextColor(getResources().getColor(R.color.colorConnected));
     }
 
     @Override

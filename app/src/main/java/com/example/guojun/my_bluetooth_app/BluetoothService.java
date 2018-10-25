@@ -28,6 +28,7 @@ public class BluetoothService extends Service {
 
     public interface Constants {
 
+        int MESSAGE_CONNECTED = 0;
         int MESSAGE_STATE_CHANGE = 1;
         int MESSAGE_READ = 2;
         int MESSAGE_WRITE = 3;
@@ -90,6 +91,9 @@ public class BluetoothService extends Service {
                 return;
             }
 
+            mHandler.obtainMessage(Constants.MESSAGE_CONNECTED)
+                    .sendToTarget();
+
             mConnectedThread = new ConnectedThread(mmSocket);
             mConnectedThread.start();
 
@@ -97,6 +101,7 @@ public class BluetoothService extends Service {
 
         public void cancel() {
             try {
+                mConnectedThread.cancel();
                 mmSocket.close();
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
@@ -138,7 +143,6 @@ public class BluetoothService extends Service {
                     // Read from the InputStream
                     bytes = mmInStream.read(buffer);
                     Log.d(TAG, "message bytes " + bytes);
-//                    Log.d(TAG, "message string bytes " + String.valueOf(bytes));
 //                    Log.d(TAG, "message buffer " + new String(buffer));
 
                     mHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
@@ -174,11 +178,14 @@ public class BluetoothService extends Service {
     }
 
     public void connect(String deviceAddress) {
+        if(mConnectThread != null){
+            mConnectThread.cancel();
+        }
         mConnectThread = new ConnectThread(deviceAddress);
         mConnectThread.start();
     }
 
-    public void diconnected(){
+    public void disconnect(){
         mConnectedThread.cancel();
         mConnectThread.cancel();
     }
