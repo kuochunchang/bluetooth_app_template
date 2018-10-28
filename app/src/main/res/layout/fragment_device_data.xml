@@ -8,7 +8,6 @@
     <TextView
         android:id="@+id/device_data_fragment_text"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="fragment" />
+        android:layout_height="match_parent" />
 
 </FrameLayout>

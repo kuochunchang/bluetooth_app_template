@@ -2,6 +2,7 @@ package com.example.guojun.my_bluetooth_app;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
 import android.util.Log;
 
 import com.example.guojun.my_bluetooth_app.exception.DeviceNotSupportException;
@@ -16,6 +17,7 @@ public class PreparedBluetoothDevices {
 
     public PreparedBluetoothDevices() throws DeviceNotSupportException {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
         if (mBluetoothAdapter == null) {
             throw new DeviceNotSupportException("The device not support bluetooth");
         } else {

@@ -1,12 +1,17 @@
 package com.example.guojun.my_bluetooth_app;
 
 import android.arch.persistence.room.Room;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,17 +35,48 @@ import io.reactivex.annotations.Nullable;
 
 public class BluetoothDeviceSelectActivity extends AppCompatActivity {
 
-    PreparedBluetoothDevices prepairedBluetoothDevices;
+    private PreparedBluetoothDevices preparedBluetoothDevices;
     private AppDatabase appDatabase;
+    private BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+
+    // Create a BroadcastReceiver for ACTION_FOUND.
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Discovery has found a device. Get the BluetoothDevice
+                // object and its info from the Intent.
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                String deviceName = device.getName();
+                String deviceHardwareAddress = device.getAddress(); // MAC address
+                Log.d("------", deviceName);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bluetooth_device_select_activity);
 
+        FloatingActionButton fab = findViewById(R.id.scan_device);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                mBluetoothAdapter.startDiscovery();
+            }
+        });
+
+        // Register for broadcasts when a device is discovered.
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(mReceiver, filter);
+
+
         // Prepare the information of paired bluetooth devices
         try {
-            prepairedBluetoothDevices = new PreparedBluetoothDevices();
+            preparedBluetoothDevices = new PreparedBluetoothDevices();
         } catch (DeviceNotSupportException dne) {
             Toast.makeText(getApplicationContext(), dne.getMessage(), Toast.LENGTH_LONG).show();
             return;
@@ -53,17 +89,18 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
 
         // Initial the ListView of paired bluetooth device on this phone
         BluetoothDeviceItemAdapter adapter = new BluetoothDeviceItemAdapter(
-                new BluetoothDeviceItemModelBuilder(prepairedBluetoothDevices.getAll()).build(),
+                new BluetoothDeviceItemModelBuilder(preparedBluetoothDevices.getAll()).build(),
                 getApplicationContext());
 
-        ListView listView = findViewById(R.id.bluetooth_device_list);
+        ListView listView = findViewById(R.id.paired_bluetooth_device_list);
         listView.setAdapter(adapter);
+
+        // While the bluetooth device selected, return to MainActivity
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-
-                BluetoothDevice selectedDevice = prepairedBluetoothDevices.getAll().get(position);
+                BluetoothDevice selectedDevice = preparedBluetoothDevices.getAll().get(position);
                 ConfigurationEntity configurationEntity =
                         new ConfigurationEntity(Configuration.BLUETOOTH_DEVICE_ADDRESS, selectedDevice.getAddress());
 
@@ -75,8 +112,15 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+
     }
 
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(mReceiver);
+        super.onDestroy();
+    }
 
     //-----------------------AsyncTasks-----------------------------------
     private class InsertDbTask extends AsyncTask<ConfigurationEntity, Void, Void> {
@@ -112,16 +156,16 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
             View convertView = null;
             ViewHolder viewHolder;
 
-            if (view == null) {
+//            if (view == null) {
                 convertView = inflater.inflate(R.layout.bluetooth_device_list_item, null);
                 viewHolder = new ViewHolder();
                 viewHolder.textName = convertView
                         .findViewById(R.id.btName);
                 viewHolder.textAddress = convertView
                         .findViewById(R.id.btAddress);
-            } else {
-                viewHolder = (ViewHolder) view.getTag();
-            }
+//            } else {
+//                viewHolder = (ViewHolder) view.getTag();
+//            }
 
 
             BluetoothDeviceItemModel device = dataSet.get(position);

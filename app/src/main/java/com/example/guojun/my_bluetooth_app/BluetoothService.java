@@ -34,6 +34,7 @@ public class BluetoothService extends Service {
         int MESSAGE_WRITE = 3;
         int MESSAGE_DEVICE_NAME = 4;
         int MESSAGE_TOAST = 5;
+        int MESSAGE_CONN_FAIL = 6;
 
         // Key names received from the BluetoothChatService Handler
         String DEVICE_NAME = "device_name";
@@ -88,20 +89,31 @@ public class BluetoothService extends Service {
                 } catch (IOException e2) {
                     Log.e(TAG, "Unable to close() socket during connection failure", e2);
                 }
+
+                mHandler.obtainMessage(Constants.MESSAGE_CONN_FAIL)
+                        .sendToTarget();
+
                 return;
             }
 
             mHandler.obtainMessage(Constants.MESSAGE_CONNECTED)
                     .sendToTarget();
 
+            if (mConnectedThread != null) {
+                mConnectedThread.cancel();
+            }
             mConnectedThread = new ConnectedThread(mmSocket);
             mConnectedThread.start();
+
 
         }
 
         public void cancel() {
             try {
-                mConnectedThread.cancel();
+                if(mConnectedThread != null) {
+                    mConnectedThread.cancel();
+                    mConnectedThread = null;
+                }
                 mmSocket.close();
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
@@ -178,16 +190,26 @@ public class BluetoothService extends Service {
     }
 
     public void connect(String deviceAddress) {
-        if(mConnectThread != null){
+        if (mConnectThread != null) {
             mConnectThread.cancel();
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         mConnectThread = new ConnectThread(deviceAddress);
         mConnectThread.start();
+
     }
 
-    public void disconnect(){
-        mConnectedThread.cancel();
-        mConnectThread.cancel();
+    public void disconnect() {
+        if (mConnectedThread != null) {
+            mConnectedThread.cancel();
+        }
+        if(mConnectThread != null) {
+            mConnectThread.cancel();
+        }
     }
 
 }

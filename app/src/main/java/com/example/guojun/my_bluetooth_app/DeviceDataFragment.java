@@ -22,14 +22,10 @@ import com.example.guojun.my_bluetooth_app.bwt901cl.SensorData;
 
 public class DeviceDataFragment extends Fragment {
     private OnFragmentInteractionListener mListener;
-    private BluetoothService mBluetoothService;
     private static final String ARG_ADDRESS = "address";
-    private DeviceDataDecoder mDeviceDataDecoder;
 
     private static final String TAG = "DeviceDataFragment";
 
-//    public DeviceDataFragment() {
-//    }
 
     public static DeviceDataFragment newInstance(String deviceAddress) {
         DeviceDataFragment deviceDataFragment = new DeviceDataFragment();
@@ -37,31 +33,14 @@ public class DeviceDataFragment extends Fragment {
         args.putString(ARG_ADDRESS, deviceAddress);
         deviceDataFragment.setArguments(args);
 
-//        deviceDataFragment.mDeviceAddress = deviceAddress;
-
         return deviceDataFragment;
     }
 
 
-    private TextView mTextView;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mDeviceDataDecoder = new DeviceDataDecoder(new DeviceDataDecoder.DecodedDataListener() {
-            @Override
-            public void onDataDecoded(SensorData data) {
-                if (mTextView == null) {
-                    mTextView = DeviceDataFragment.this.getActivity().findViewById(R.id.device_data_fragment_text);
-                }
-                mTextView.setText(data.toString());
-//                mTextView.setText(data.getTime()+" " +Double.valueOf(data.getAccelerationX()).toString());
-//                Log.d(TAG, data.toString());
-            }
-        });
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -81,63 +60,19 @@ public class DeviceDataFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
-
-        getActivity().bindService(
-                new Intent(getActivity(), BluetoothService.class),
-                new BluetoothServiceConnection(), Context.BIND_AUTO_CREATE);
-
-
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mBluetoothService.disconnect();
     }
 
 
     public interface OnFragmentInteractionListener {
-        void onDeviceConnected();
+        void onFragmentInteraction();
     }
 
-    // -----------------------------------------
-    private class BluetoothServiceConnection implements ServiceConnection {
 
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            TextView textView = DeviceDataFragment.this.getActivity().findViewById(R.id.device_data_fragment_text);
-            textView.setText("Connecting...");
-
-            mBluetoothService = ((BluetoothService.LocalBinder) service).getService(new IncomingMessageHandler());
-            mBluetoothService.connect(getArguments().getString(ARG_ADDRESS));
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-        }
-    }
-
-    class IncomingMessageHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-
-            switch (msg.what) {
-                case BluetoothService.Constants.MESSAGE_READ:
-                    byte[] readBuf = (byte[]) msg.obj;
-                    int length = msg.arg1;
-                    try {
-                        mDeviceDataDecoder.putRawData(readBuf, length);
-                    } catch (Exception e) {
-                        Log.e(TAG, e.getMessage());
-                    }
-                    break;
-                case BluetoothService.Constants.MESSAGE_CONNECTED:
-                    mListener.onDeviceConnected();
-                    break;
-            }
-        }
-    }
 
 
 }

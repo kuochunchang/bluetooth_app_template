@@ -1,11 +1,22 @@
 package com.example.guojun.my_bluetooth_app;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.arch.persistence.room.Room;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -14,8 +25,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.example.guojun.my_bluetooth_app.bwt901cl.DeviceDataDecoder;
+import com.example.guojun.my_bluetooth_app.bwt901cl.SensorData;
 import com.example.guojun.my_bluetooth_app.db.AppDatabase;
 import com.example.guojun.my_bluetooth_app.db.ConfigurationEntity;
 import com.example.guojun.my_bluetooth_app.exception.DeviceNotSupportException;
@@ -28,27 +40,79 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
     private BluetoothDevice mCurrentBluetoothDevice;
     private DeviceDataFragment mFragment;
     private AppDatabase mAppDatabase;
+    private BluetoothService mBluetoothService;
+    private DeviceDataDecoder mDeviceDataDecoder;
+    private BluetoothServiceConnection mBluetoothServiceConnection;
 
     private static final String TAG = "MainActivity";
+    private boolean mThisDeviceSupportBluetooth = false;
+    private boolean mIsBluetoothEnabled = false;
+    private static final int ACTION_REQUEST_ENABLE_REQUEST = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        TextView deviceName = findViewById(R.id.bluetooth_device_name);
+
+        // Check if the device has bluetooth adapter
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter == null) {
+            mThisDeviceSupportBluetooth = false;
+            deviceName.setText("This device not support bluetooth.");
+            return;
+        } else {
+            mThisDeviceSupportBluetooth = true;
+        }
+
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, ACTION_REQUEST_ENABLE_REQUEST);
+
+        } else {
+            mIsBluetoothEnabled = true;
+        }
+
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case ACTION_REQUEST_ENABLE_REQUEST:
+                if (resultCode == Activity.RESULT_OK) {
+                    mIsBluetoothEnabled = true;
+                    onStart();
+                }
+                break;
+        }
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!mThisDeviceSupportBluetooth || !mIsBluetoothEnabled) {
+            return;
+        }
+
+        TextView deviceName = findViewById(R.id.bluetooth_device_name);
         try {
             mPreparedBluetoothDevices = new PreparedBluetoothDevices();
         } catch (DeviceNotSupportException dne) {
-            Toast.makeText(getApplicationContext(), dne.getMessage(), Toast.LENGTH_LONG).show();
+            deviceName.setText(dne.getMessage());
+            mThisDeviceSupportBluetooth = false;
+            return;
         }
-
 
         mAppDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "app-db").allowMainThreadQueries().build();
         ConfigurationEntity bluetoothDevice =
                 mAppDatabase.configurationDao().getConfiguration(Configuration.BLUETOOTH_DEVICE_ADDRESS);
-
-        TextView deviceName = findViewById(R.id.bluetooth_device_name);
 
         if (bluetoothDevice == null) {
             deviceName.setText("The bluetooth device has not set up. Please tap the icon at bottom of screen to set up.");
@@ -68,18 +132,24 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
             String deviceAddress = bluetoothDevice.getValue();
             mCurrentBluetoothDevice = mPreparedBluetoothDevices.findByAddress(deviceAddress);
             deviceName.setText(String.format("%s (%s)", mCurrentBluetoothDevice.getName(), mCurrentBluetoothDevice.getAddress()));
+            mBluetoothServiceConnection = new BluetoothServiceConnection();
+            bindService(
+                    new Intent(this, BluetoothService.class), mBluetoothServiceConnection
+                    , Context.BIND_AUTO_CREATE);
+
+            mDeviceDataDecoder = new DeviceDataDecoder(new DeviceDataDecoder.DecodedDataListener() {
+                TextView mmTextView;
+
+                @Override
+                public void onDataDecoded(SensorData data) {
+                    if (mmTextView == null) {
+                        mmTextView = findViewById(R.id.device_data_fragment_text);
+                    }
+                    mmTextView.setText(data.toString());
+                }
+            });
 
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-//        ConfigurationEntity bluetoothDevice =
-//                mAppDatabase.configurationDao().getConfiguration(Configuration.BLUETOOTH_DEVICE_ADDRESS);
-//
-
 
         // Load device data fragment
         FragmentManager fragmentManager = getFragmentManager();
@@ -110,19 +180,66 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
     }
 
     @Override
-    public void onDeviceConnected() {
-        TextView textView = findViewById(R.id.bluetooth_device_status);
-        textView.setText("Connected");
-        textView.setTextColor(getResources().getColor(R.color.colorConnected));
+    public void onFragmentInteraction() {
     }
 
     @Override
     protected void onDestroy() {
+        if (mThisDeviceSupportBluetooth) {
+            mBluetoothService.disconnect();
+            Log.d(TAG, "releaseService(): unbound.");
+        }
         super.onDestroy();
-        Log.d(TAG, "releaseService(): unbound.");
     }
 
     //--------------------------------------------------
+    private class BluetoothServiceConnection implements ServiceConnection {
 
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            TextView textView = findViewById(R.id.bluetooth_device_status);
+            textView.setText("Connecting...");
+
+            if (mBluetoothService == null) {
+                mBluetoothService = ((BluetoothService.LocalBinder) service).getService(new IncomingMessageHandler());
+                mBluetoothService.connect(mCurrentBluetoothDevice.getAddress());
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    }
+
+
+    class IncomingMessageHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            TextView textView = findViewById(R.id.bluetooth_device_status);
+
+            switch (msg.what) {
+                case BluetoothService.Constants.MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+                    int length = msg.arg1;
+                    try {
+                        mDeviceDataDecoder.putRawData(readBuf, length);
+                    } catch (Exception e) {
+                        Log.e(TAG, e.getMessage());
+                    }
+                    break;
+                case BluetoothService.Constants.MESSAGE_CONNECTED:
+                    textView.setText("Connected");
+                    textView.setTextColor(getResources().getColor(R.color.colorConnected));
+                    break;
+                case BluetoothService.Constants.MESSAGE_CONN_FAIL:
+                    textView.setText("Fail to connect");
+                    textView.setTextColor(getResources().getColor(R.color.colorAccent));
+
+                    break;
+            }
+        }
+    }
 
 }
