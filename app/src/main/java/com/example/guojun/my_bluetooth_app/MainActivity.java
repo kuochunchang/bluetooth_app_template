@@ -1,16 +1,12 @@
 package com.example.guojun.my_bluetooth_app;
 
 import android.app.Activity;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.arch.persistence.room.Room;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,11 +30,11 @@ import com.example.guojun.my_bluetooth_app.exception.DeviceNotSupportException;
 import com.example.guojun.my_bluetooth_app.model.Configuration;
 
 
-public class MainActivity extends AppCompatActivity implements DeviceDataFragment.OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity{
 
     private PreparedBluetoothDevices mPreparedBluetoothDevices;
     private BluetoothDevice mCurrentBluetoothDevice;
-    private DeviceDataFragment mFragment;
+
     private AppDatabase mAppDatabase;
     private BluetoothService mBluetoothService;
     private DeviceDataDecoder mDeviceDataDecoder;
@@ -91,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
                 }
                 break;
         }
-
     }
 
     @Override
@@ -143,21 +138,12 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
                 @Override
                 public void onDataDecoded(SensorData data) {
                     if (mmTextView == null) {
-                        mmTextView = findViewById(R.id.device_data_fragment_text);
+                        mmTextView = findViewById(R.id.device_data_text);
                     }
                     mmTextView.setText(data.toString());
                 }
             });
-
         }
-
-        // Load device data fragment
-        FragmentManager fragmentManager = getFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        mFragment = DeviceDataFragment.newInstance(mCurrentBluetoothDevice.getAddress());
-        fragmentTransaction.add(R.id.device_data_fragment_container, mFragment);
-        fragmentTransaction.commit();
-
     }
 
     @Override
@@ -180,10 +166,6 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
     }
 
     @Override
-    public void onFragmentInteraction() {
-    }
-
-    @Override
     protected void onDestroy() {
         if (mThisDeviceSupportBluetooth) {
             mBluetoothService.disconnect();
@@ -198,9 +180,9 @@ public class MainActivity extends AppCompatActivity implements DeviceDataFragmen
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             TextView textView = findViewById(R.id.bluetooth_device_status);
-            textView.setText("Connecting...");
 
             if (mBluetoothService == null) {
+                textView.setText("Connecting...");
                 mBluetoothService = ((BluetoothService.LocalBinder) service).getService(new IncomingMessageHandler());
                 mBluetoothService.connect(mCurrentBluetoothDevice.getAddress());
             }

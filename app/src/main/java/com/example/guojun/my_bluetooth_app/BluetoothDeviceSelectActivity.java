@@ -1,15 +1,17 @@
 package com.example.guojun.my_bluetooth_app;
 
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.arch.persistence.room.Room;
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+
+
+
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,6 +27,7 @@ import com.example.guojun.my_bluetooth_app.db.AppDatabase;
 import com.example.guojun.my_bluetooth_app.db.ConfigurationEntity;
 import com.example.guojun.my_bluetooth_app.exception.DeviceNotSupportException;
 import com.example.guojun.my_bluetooth_app.model.Configuration;
+import com.example.guojun.my_bluetooth_app.ui.bluetoothdevicediscovery.BluetoothDeviceDiscoveryFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,23 +40,8 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
 
     private PreparedBluetoothDevices preparedBluetoothDevices;
     private AppDatabase appDatabase;
-//    private BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
 
-    // Create a BroadcastReceiver for ACTION_FOUND.
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                // Discovery has found a device. Get the BluetoothDevice
-                // object and its info from the Intent.
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                String deviceName = device.getName();
-                String deviceHardwareAddress = device.getAddress(); // MAC address
-                Log.d("------", deviceHardwareAddress + ":" + deviceName);
-            }
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,14 +52,16 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-                mBluetoothAdapter.startDiscovery();
+                FragmentManager fragmentManager =getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                BluetoothDeviceDiscoveryFragment fragment = BluetoothDeviceDiscoveryFragment.newInstance();
+                fragmentTransaction.add(R.id.discovered_device_fragment_container, fragment);
+                fragmentTransaction.commit();
+                // 改啟動 DevieScan fragment
+//                BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+//                mBluetoothAdapter.startDiscovery();
             }
         });
-
-        // Register for broadcasts when a device is discovered.
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(mReceiver, filter);
 
 
         // Prepare the information of paired bluetooth devices
@@ -118,7 +108,6 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(mReceiver);
         super.onDestroy();
     }
 
