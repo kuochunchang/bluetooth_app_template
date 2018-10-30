@@ -57,9 +57,6 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
                 BluetoothDeviceDiscoveryFragment fragment = BluetoothDeviceDiscoveryFragment.newInstance();
                 fragmentTransaction.add(R.id.discovered_device_fragment_container, fragment);
                 fragmentTransaction.commit();
-                // 改啟動 DevieScan fragment
-//                BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-//                mBluetoothAdapter.startDiscovery();
             }
         });
 

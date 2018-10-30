@@ -32,13 +32,14 @@ import com.example.guojun.my_bluetooth_app.model.Configuration;
 
 public class MainActivity extends AppCompatActivity{
 
-    private PreparedBluetoothDevices mPreparedBluetoothDevices;
-    private BluetoothDevice mCurrentBluetoothDevice;
+//    private PreparedBluetoothDevices mPreparedBluetoothDevices;
+//    private BluetoothDevice mCurrentBluetoothDevice;
 
     private AppDatabase mAppDatabase;
     private BluetoothService mBluetoothService;
     private DeviceDataDecoder mDeviceDataDecoder;
     private BluetoothServiceConnection mBluetoothServiceConnection;
+    private String mCurrentDeviceAddress;
 
     private static final String TAG = "MainActivity";
     private boolean mThisDeviceSupportBluetooth = false;
@@ -97,19 +98,22 @@ public class MainActivity extends AppCompatActivity{
         }
 
         TextView deviceName = findViewById(R.id.bluetooth_device_name);
-        try {
-            mPreparedBluetoothDevices = new PreparedBluetoothDevices();
-        } catch (DeviceNotSupportException dne) {
-            deviceName.setText(dne.getMessage());
-            mThisDeviceSupportBluetooth = false;
-            return;
-        }
+//        try {
+//            mPreparedBluetoothDevices = new PreparedBluetoothDevices();
+//        } catch (DeviceNotSupportException dne) {
+//            deviceName.setText(dne.getMessage());
+//            mThisDeviceSupportBluetooth = false;
+//            return;
+//        }
 
         mAppDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "app-db").allowMainThreadQueries().build();
-        ConfigurationEntity bluetoothDevice =
+        ConfigurationEntity addressConfigurationEntity =
                 mAppDatabase.configurationDao().getConfiguration(Configuration.BLUETOOTH_DEVICE_ADDRESS);
+        ConfigurationEntity nameConfigurationEntity =
+                mAppDatabase.configurationDao().getConfiguration(Configuration.BLUETOOTH_DEVICE_NAME);
 
-        if (bluetoothDevice == null) {
+
+        if (addressConfigurationEntity == null) {
             deviceName.setText("The bluetooth device has not set up. Please tap the icon at bottom of screen to set up.");
             FloatingActionButton fab = findViewById(R.id.fab);
             fab.setOnClickListener(new View.OnClickListener() {
@@ -124,9 +128,9 @@ public class MainActivity extends AppCompatActivity{
             FloatingActionButton fab = findViewById(R.id.fab);
             fab.hide();
 
-            String deviceAddress = bluetoothDevice.getValue();
-            mCurrentBluetoothDevice = mPreparedBluetoothDevices.findByAddress(deviceAddress);
-            deviceName.setText(String.format("%s (%s)", mCurrentBluetoothDevice.getName(), mCurrentBluetoothDevice.getAddress()));
+            String deviceAddress = addressConfigurationEntity.getValue();
+            mCurrentDeviceAddress = deviceAddress;
+            deviceName.setText(String.format("%s (%s)", nameConfigurationEntity.getValue(), mCurrentDeviceAddress));
             mBluetoothServiceConnection = new BluetoothServiceConnection();
             bindService(
                     new Intent(this, BluetoothService.class), mBluetoothServiceConnection
@@ -184,7 +188,7 @@ public class MainActivity extends AppCompatActivity{
             if (mBluetoothService == null) {
                 textView.setText("Connecting...");
                 mBluetoothService = ((BluetoothService.LocalBinder) service).getService(new IncomingMessageHandler());
-                mBluetoothService.connect(mCurrentBluetoothDevice.getAddress());
+                mBluetoothService.connect(mCurrentDeviceAddress);
             }
         }
 

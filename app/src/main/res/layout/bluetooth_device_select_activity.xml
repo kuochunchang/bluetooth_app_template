@@ -21,23 +21,22 @@
     <ListView
         android:id="@+id/paired_bluetooth_device_list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_margin="8dp"
         android:layout_marginStart="8dp"
         android:paddingStart="20dp"
         android:paddingEnd="10dp"
-        app:layout_constraintBottom_toTopOf="@+id/discovered_device_fragment_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/paired_device_label" />
 
     <FrameLayout
         android:id="@+id/discovered_device_fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="0dp"
         android:layout_margin="8dp"
         app:layout_constraintBottom_toTopOf="@+id/scan_device"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/device_status_bar"
+        app:layout_constraintTop_toBottomOf="@+id/paired_bluetooth_device_list"
         tools:layout_editor_absoluteX="0dp" />
 
     <android.support.design.widget.FloatingActionButton
