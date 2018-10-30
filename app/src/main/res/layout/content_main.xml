@@ -12,8 +12,8 @@
         android:id="@+id/device_status_bar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_margin="5dp"
+        android:orientation="horizontal"
         android:text="-----------------"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -34,15 +34,14 @@
             app:layout_constraintVertical_bias="0.0" />
 
 
-
         <TextView
             android:id="@+id/bluetooth_device_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="5dp"
             android:text="Disconnect"
-            android:textStyle="bold"
             android:textSize="15sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintRight_toRightOf="parent"
@@ -54,14 +53,22 @@
 
 
     <FrameLayout
-        android:id="@+id/device_data_fragment_container"
+        android:id="@+id/device_data_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_margin="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/device_status_bar"
-        tools:layout_editor_absoluteX="0dp" />
+        tools:layout_editor_absoluteX="0dp">
 
+        <TextView
+            android:id="@+id/device_data_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        />
+
+    </FrameLayout>
 
 </android.support.constraint.ConstraintLayout>

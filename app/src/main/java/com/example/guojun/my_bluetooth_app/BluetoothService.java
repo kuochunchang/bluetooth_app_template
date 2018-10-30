@@ -166,7 +166,7 @@ public class BluetoothService extends Service {
                     break;
                 }
             }
-        }ㄈ
+        }
 
         public void write(byte[] buffer) {
             try {
