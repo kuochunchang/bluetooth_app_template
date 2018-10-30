@@ -37,7 +37,7 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
 
     private PreparedBluetoothDevices preparedBluetoothDevices;
     private AppDatabase appDatabase;
-    private BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+//    private BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
 
     // Create a BroadcastReceiver for ACTION_FOUND.
@@ -50,7 +50,7 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 String deviceName = device.getName();
                 String deviceHardwareAddress = device.getAddress(); // MAC address
-                Log.d("------", deviceName);
+                Log.d("------", deviceHardwareAddress + ":" + deviceName);
             }
         }
     };
@@ -88,7 +88,7 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
                         getApplicationContext(), AppDatabase.class, "app-db").build();
 
         // Initial the ListView of paired bluetooth device on this phone
-        BluetoothDeviceItemAdapter adapter = new BluetoothDeviceItemAdapter(
+        PairedBluetoothDeviceItemAdapter adapter = new PairedBluetoothDeviceItemAdapter(
                 new BluetoothDeviceItemModelBuilder(preparedBluetoothDevices.getAll()).build(),
                 getApplicationContext());
 
@@ -135,12 +135,12 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
     }
 
     // --------------------ListView related classes--------------------------
-    private class BluetoothDeviceItemAdapter extends ArrayAdapter<BluetoothDeviceItemModel> {
+    private class PairedBluetoothDeviceItemAdapter extends ArrayAdapter<BluetoothDeviceItemModel> {
         private LayoutInflater inflater = BluetoothDeviceSelectActivity.this.getLayoutInflater();
         private List<BluetoothDeviceItemModel> dataSet;
 
 
-        BluetoothDeviceItemAdapter(List<BluetoothDeviceItemModel> data, Context context) {
+        PairedBluetoothDeviceItemAdapter(List<BluetoothDeviceItemModel> data, Context context) {
             super(context, R.layout.bluetooth_device_list_item, data);
             this.dataSet = data;
         }
@@ -156,24 +156,18 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
             View convertView = null;
             ViewHolder viewHolder;
 
-//            if (view == null) {
-                convertView = inflater.inflate(R.layout.bluetooth_device_list_item, null);
-                viewHolder = new ViewHolder();
-                viewHolder.textName = convertView
-                        .findViewById(R.id.btName);
-                viewHolder.textAddress = convertView
-                        .findViewById(R.id.btAddress);
-//            } else {
-//                viewHolder = (ViewHolder) view.getTag();
-//            }
-
+            convertView = inflater.inflate(R.layout.bluetooth_device_list_item, null);
+            viewHolder = new ViewHolder();
+            viewHolder.textName = convertView
+                    .findViewById(R.id.btName);
+            viewHolder.textAddress = convertView
+                    .findViewById(R.id.btAddress);
 
             BluetoothDeviceItemModel device = dataSet.get(position);
             viewHolder.textName.setText(device.getName());
             viewHolder.textAddress.setText(device.getAddress());
 
             return convertView;
-
         }
 
     }
@@ -197,17 +191,17 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
     }
 
     private class BluetoothDeviceItemModelBuilder {
-        List<BluetoothDevice> btdeviceList;
+        List<BluetoothDevice> deviceList;
 
-        BluetoothDeviceItemModelBuilder(List<BluetoothDevice> btdeviceList) {
-            this.btdeviceList = btdeviceList;
+        BluetoothDeviceItemModelBuilder(List<BluetoothDevice> deviceList) {
+            this.deviceList = deviceList;
         }
 
 
         List<BluetoothDeviceItemModel> build() {
             List<BluetoothDeviceItemModel> result = new ArrayList<>();
-            for (BluetoothDevice bd : btdeviceList) {
-                BluetoothDeviceItemModel item = new BluetoothDeviceItemModel(bd.getName(), bd.getAddress());
+            for (BluetoothDevice device : deviceList) {
+                BluetoothDeviceItemModel item = new BluetoothDeviceItemModel(device.getName(), device.getAddress());
                 result.add(item);
             }
             return result;
