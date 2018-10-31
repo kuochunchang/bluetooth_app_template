@@ -3,7 +3,6 @@ package com.example.guojun.my_bluetooth_app;
 import android.app.Activity;
 import android.arch.persistence.room.Room;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -26,14 +25,10 @@ import com.example.guojun.my_bluetooth_app.bwt901cl.DeviceDataDecoder;
 import com.example.guojun.my_bluetooth_app.bwt901cl.SensorData;
 import com.example.guojun.my_bluetooth_app.db.AppDatabase;
 import com.example.guojun.my_bluetooth_app.db.ConfigurationEntity;
-import com.example.guojun.my_bluetooth_app.exception.DeviceNotSupportException;
 import com.example.guojun.my_bluetooth_app.model.Configuration;
 
 
 public class MainActivity extends AppCompatActivity{
-
-//    private PreparedBluetoothDevices mPreparedBluetoothDevices;
-//    private BluetoothDevice mCurrentBluetoothDevice;
 
     private AppDatabase mAppDatabase;
     private BluetoothService mBluetoothService;
@@ -98,13 +93,6 @@ public class MainActivity extends AppCompatActivity{
         }
 
         TextView deviceName = findViewById(R.id.bluetooth_device_name);
-//        try {
-//            mPreparedBluetoothDevices = new PreparedBluetoothDevices();
-//        } catch (DeviceNotSupportException dne) {
-//            deviceName.setText(dne.getMessage());
-//            mThisDeviceSupportBluetooth = false;
-//            return;
-//        }
 
         mAppDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "app-db").allowMainThreadQueries().build();
         ConfigurationEntity addressConfigurationEntity =

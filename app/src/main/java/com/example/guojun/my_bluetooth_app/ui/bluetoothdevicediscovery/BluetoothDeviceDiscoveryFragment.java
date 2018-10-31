@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -23,11 +22,11 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.example.guojun.my_bluetooth_app.BluetoothDeviceSelectActivity;
 import com.example.guojun.my_bluetooth_app.MainActivity;
 import com.example.guojun.my_bluetooth_app.R;
 import com.example.guojun.my_bluetooth_app.db.AppDatabase;
 import com.example.guojun.my_bluetooth_app.db.ConfigurationEntity;
+import com.example.guojun.my_bluetooth_app.model.BluetoothDeviceInfo;
 import com.example.guojun.my_bluetooth_app.model.Configuration;
 
 import java.util.LinkedList;
@@ -37,6 +36,7 @@ public class BluetoothDeviceDiscoveryFragment extends Fragment {
     private BluetoothDeviceDiscoveryViewModel mViewModel;
     private ListView mDeviceListView;
     private BluetoothAdapter mBluetoothAdapter;
+    private static final String TAG = "DeviceDiscoveryFragment";
 
     public static BluetoothDeviceDiscoveryFragment newInstance() {
         return new BluetoothDeviceDiscoveryFragment();
@@ -74,10 +74,10 @@ public class BluetoothDeviceDiscoveryFragment extends Fragment {
         mDeviceListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Log.d("====>", "" + position);
-                Log.d("====>", mViewModel.getAvailableDevices().getValue().get(position)[0]);
-                String name = mViewModel.getAvailableDevices().getValue().get(position)[0];
-                String address = mViewModel.getAvailableDevices().getValue().get(position)[1];
+                Log.d(TAG, mViewModel.getAvailableDevicesLiveData().getValue().get(position).getName());
+
+                String name = mViewModel.getAvailableDevicesLiveData().getValue().get(position).getName();
+                String address = mViewModel.getAvailableDevicesLiveData().getValue().get(position).getAddress();
                 ConfigurationEntity configurationEntity =
                         new ConfigurationEntity(Configuration.BLUETOOTH_DEVICE_ADDRESS, address);
 
@@ -103,16 +103,16 @@ public class BluetoothDeviceDiscoveryFragment extends Fragment {
         getActivity().registerReceiver(mReceiver, filter);
 
         mViewModel = ViewModelProviders.of(this).get(BluetoothDeviceDiscoveryViewModel.class);
-        mViewModel.getAvailableDevices().observe(this, new Observer<LinkedList<String[]>>() {
+        mViewModel.getAvailableDevicesLiveData().observe(this, new Observer<LinkedList<BluetoothDeviceInfo>>() {
             @Override
-            public void onChanged(@Nullable LinkedList<String[]> discoveryDevices) {
+            public void onChanged(@Nullable LinkedList<BluetoothDeviceInfo> discoveryDevices) {
                 // Update the UI.
                 Log.d("====", discoveryDevices.toString());
                 if (discoveryDevices.size() > 0) {
                     String[] listItems = new String[discoveryDevices.size()];
-                    int c = 0;
-                    for (String[] deviceInfo : discoveryDevices) {
-                        listItems[c++] = deviceInfo[0] + " - " + deviceInfo[1];
+                    int counter = 0;
+                    for (BluetoothDeviceInfo deviceInfo : discoveryDevices) {
+                        listItems[counter++] = deviceInfo.getName() + " - " + deviceInfo.getAddress();
                     }
 
                     final ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(),

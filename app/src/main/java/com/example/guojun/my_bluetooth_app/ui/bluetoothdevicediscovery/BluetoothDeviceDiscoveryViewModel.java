@@ -1,26 +1,31 @@
 package com.example.guojun.my_bluetooth_app.ui.bluetoothdevicediscovery;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 
-import java.util.LinkedHashMap;
+import com.example.guojun.my_bluetooth_app.model.BluetoothDeviceInfo;
+
 import java.util.LinkedList;
-import java.util.Map;
 
 public class BluetoothDeviceDiscoveryViewModel extends ViewModel {
-    private MutableLiveData<LinkedList<String[]>> availableDevices;
+    private MutableLiveData<LinkedList<BluetoothDeviceInfo>> availableDevicesLiveData;
+    private LinkedList<BluetoothDeviceInfo> availableDevices = new LinkedList<>();
 
-    public MutableLiveData<LinkedList<String[]>> getAvailableDevices() {
-        if(availableDevices == null){
-            availableDevices = new MutableLiveData<>();
-            availableDevices.setValue(new LinkedList<String[]>());
+    public MutableLiveData<LinkedList<BluetoothDeviceInfo>> getAvailableDevicesLiveData() {
+        if(availableDevicesLiveData == null){
+            availableDevicesLiveData = new MutableLiveData<>();
+            availableDevicesLiveData.setValue(availableDevices);
         }
-        return availableDevices;
+        return availableDevicesLiveData;
     }
 
     public void addAvailableDevice(String name, String address){
-        availableDevices.getValue().add(new String[]{name, address});
-        availableDevices.setValue(availableDevices.getValue());
+        BluetoothDeviceInfo discoveredDevice = new BluetoothDeviceInfo(name, address);
+        if(!availableDevices.contains(discoveredDevice)) {
+            availableDevices.add(discoveredDevice);
+        }
+        availableDevicesLiveData.setValue(availableDevices);
     }
+
+
 }
