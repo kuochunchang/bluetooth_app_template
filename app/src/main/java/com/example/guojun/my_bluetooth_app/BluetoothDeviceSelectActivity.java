@@ -88,6 +88,13 @@ public class BluetoothDeviceSelectActivity extends AppCompatActivity {
                 InsertDbTask asyncTask = new InsertDbTask();
                 asyncTask.execute(configurationEntity);
 
+                configurationEntity =
+                        new ConfigurationEntity(Configuration.BLUETOOTH_DEVICE_NAME, selectedDevice.getName());
+
+                asyncTask = new InsertDbTask();
+                asyncTask.execute(configurationEntity);
+
+
                 Intent intent =
                         new Intent(BluetoothDeviceSelectActivity.this, MainActivity.class);
                 startActivity(intent);
